@@ -21,6 +21,7 @@ int WIDTH= 500, HEIGHT= 250;
 GLdouble xLeft= 0.0, xRight= 500.0, yBot= 0.0, yTop= 250.0;
 
 Group root;
+Group triangles;
 
 enum Mode { 
 	DESIGN, SELECT, ANIMATE
@@ -171,11 +172,12 @@ int main(int argc, char *argv[]){
   //OpenGL basic setting
   intitGL();
 
-  Triangle triangle(100, 50);
+  Triangle triangle;
   triangle.setX(100);
   triangle.setY(100);
   triangle.setColor(1, 0, 0, 1);
-  root.addChildren(&triangle);
+  triangles.addChildren(&triangle);
+  root.addChildren(&triangles);
   
   // Freeglut's main loop can be stopped executing (**)
   //while ( continue_in_main_loop )

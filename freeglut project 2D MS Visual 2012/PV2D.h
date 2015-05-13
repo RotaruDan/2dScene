@@ -9,6 +9,7 @@ private:
    float y;
 
 public:
+   PV2D();
    PV2D(float x1, float y1);
    ~PV2D();
    void trasladar(PV2D* traslacion); //modifica this
