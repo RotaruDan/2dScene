@@ -3,6 +3,8 @@
 #include <gl/GLU.h>
 
 #include <GL/freeglut.h>
+#include "Group.h"
+#include "Triangle.h"
 //#include <GL/glut.h>
 
 #include <iostream>
@@ -18,10 +20,13 @@ int WIDTH= 500, HEIGHT= 250;
 // Scene visible area size
 GLdouble xLeft= 0.0, xRight= 500.0, yBot= 0.0, yTop= 250.0;
 
-// Scene variables
-GLdouble xTriangle= 100.0, yTriangle= 100.0;
-GLdouble triangleWidth= 100.0, triangleHeight= 50.0;
+Group root;
 
+enum Mode { 
+	DESIGN, SELECT, ANIMATE
+};
+
+Mode mode;
 
 void intitGL(){
 
@@ -48,12 +53,7 @@ void intitGL(){
 void display(void){
   glClear( GL_COLOR_BUFFER_BIT );
 
-  // Scene rendering
-  glBegin ( GL_TRIANGLES ) ;
-       glVertex2d( xTriangle, yTriangle );
-       glVertex2d( xTriangle + triangleWidth, yTriangle );
-       glVertex2d( xTriangle + triangleWidth, yTriangle + triangleHeight );
-  glEnd () ;
+  root.render();
 
   glFlush();
   glutSwapBuffers();
@@ -99,12 +99,16 @@ void key(unsigned char key, int x, int y){
 	glutLeaveMainLoop (); //Freeglut's sentence for stopping glut's main loop (*)
     break;
 
-  case '+' :
-    xTriangle += 10.0;
+  case 'a' :
+	mode = ANIMATE;
     break ;
 
-  case '-' :
-    xTriangle -= 10.0;
+  case 's' :
+   mode = SELECT;
+    break ;
+	
+  case 'd' :
+   mode = DESIGN;
     break ;
 
   default:
@@ -118,8 +122,27 @@ void key(unsigned char key, int x, int y){
 
 
 void mouse(int button, int state, int x, int y){
-	if ((button==GLUT_LEFT_BUTTON) && (state==GLUT_DOWN))
-		cout << x << '\t' << y << endl;
+	if ((button==GLUT_LEFT_BUTTON) && (state==GLUT_DOWN)) {
+		cout << "Screen: " << x << '\t' << y << endl;
+
+	/*
+	Area visible de la escena (virtual) -> X, Y
+	Area de Vista -> X', Y'
+
+	pasar de X', Y' a X, Y :
+
+	X = xLeft + ((xRight-xLeft) / WIDTH) * X'
+
+	El S.O. devuelve las coordenadas de la Y' teniendo el origen de coordenadas arriba a la izquierda
+	Y = yTop - ((yTop-yBottom) / HEIGHT) * Y'
+	*/
+		GLdouble worldX, worldY;
+
+		worldX = xLeft + ((xRight - xLeft) / (double) WIDTH) * x;
+		worldY = yTop - ((yTop - yBot) / (double) HEIGHT) * y;
+		
+		cout << "World: " << worldX << '\t' << worldY << endl << endl;
+	}
 }
 
 
@@ -136,7 +159,7 @@ int main(int argc, char *argv[]){
   glutInit(&argc, argv);
 
   //Window construction
-  my_window = glutCreateWindow( "Freeglut 2D-project" );
+  my_window = glutCreateWindow( "Práctica 3" );
     
   //Callback registration
   glutReshapeFunc(resize);
@@ -148,7 +171,12 @@ int main(int argc, char *argv[]){
   //OpenGL basic setting
   intitGL();
 
-
+  Triangle triangle(100, 50);
+  triangle.setX(100);
+  triangle.setY(100);
+  triangle.setColor(1, 0, 0, 1);
+  root.addChildren(&triangle);
+  
   // Freeglut's main loop can be stopped executing (**)
   //while ( continue_in_main_loop )
   //  glutMainLoopEvent();
