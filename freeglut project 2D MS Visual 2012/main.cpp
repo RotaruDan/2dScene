@@ -1,10 +1,14 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include <gl/GLU.h>
-
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>
 #include <GL/freeglut.h>
 #include "Group.h"
 #include "Triangle.h"
+#include "Image.h"
+#include "TextureManagement.h"
 //#include <GL/glut.h>
 
 #include <iostream>
@@ -17,17 +21,19 @@ using namespace std;
 // Viewport size
 int WIDTH= 500, HEIGHT= 250;
 
+int animationPeriod = 1000;
+
+boolean animating = true;
 // Scene visible area size
 GLdouble xLeft= 0.0, xRight= 500.0, yBot= 0.0, yTop= 250.0;
 
 Group root;
 Group triangles;
-
-enum Mode { 
-	DESIGN, SELECT, ANIMATE
-};
+Triangle * triangle;
+Image image;
 
 Mode mode;
+GLuint textureID;
 
 void intitGL(){
 
@@ -60,6 +66,19 @@ void display(void){
   glutSwapBuffers();
 }
 
+void animate(int value){
+	if(animating) {
+		vector<Actor*> children = triangles.getChildren();
+		unsigned int i, size = children.size();
+		for(i = 0; i < size; ++i){
+			Triangle* child = (Triangle*) children[i];
+			(*child).move();
+		}
+	
+		glutTimerFunc(animationPeriod, animate, 1);
+		glutPostRedisplay();
+	}
+}
 
 void resize(int newWidth, int newHeight){
   //GLdouble widthScale= WIDTH/(xRight-xLeft);
@@ -86,14 +105,24 @@ void resize(int newWidth, int newHeight){
   WIDTH= newWidth;
   HEIGHT= newHeight;
   glViewport ( 0, 0, WIDTH, HEIGHT ) ;
-
+  
+  image.setSize((float) WIDTH, (float) HEIGHT);
 }
 
+
+void changeMode(Mode newMode) {
+	mode = newMode;
+	vector<Actor*> children = triangles.getChildren();
+	unsigned int i, size = children.size();
+	for(i = 0; i < size; ++i){
+		Triangle* child = (Triangle*) children[i];
+		(*child).setMode(newMode);
+	}
+}
 
 void key(unsigned char key, int x, int y){
  
   bool need_redisplay = true;
-
   switch (key) {
   case 27:  /* Escape key */
     //continue_in_main_loop = false; // (**)
@@ -101,15 +130,29 @@ void key(unsigned char key, int x, int y){
     break;
 
   case 'a' :
-	mode = ANIMATE;
+	changeMode(ANIMATE);
+    image.setVisible(false);	
+	if(animating) {
+		animate(1);
+	}
     break ;
 
   case 's' :
-   mode = SELECT;
+	  
+    if(mode == ANIMATE) {
+		animating = !animating;
+		if(animating) {
+			animate(1);
+		}
+	} else {
+		changeMode(SELECT);
+		image.setVisible(false);
+	}
     break ;
 	
   case 'd' :
-   mode = DESIGN;
+    changeMode(DESIGN);
+    image.setVisible(true);
     break ;
 
   default:
@@ -137,12 +180,40 @@ void mouse(int button, int state, int x, int y){
 	El S.O. devuelve las coordenadas de la Y' teniendo el origen de coordenadas arriba a la izquierda
 	Y = yTop - ((yTop-yBottom) / HEIGHT) * Y'
 	*/
-		GLdouble worldX, worldY;
+		GLfloat worldX, worldY;
 
-		worldX = xLeft + ((xRight - xLeft) / (double) WIDTH) * x;
-		worldY = yTop - ((yTop - yBot) / (double) HEIGHT) * y;
+		worldX = xLeft + ((xRight - xLeft) / (float) WIDTH) * x;
+		worldY = yTop - ((yTop - yBot) / (float) HEIGHT) * y;
 		
 		cout << "World: " << worldX << '\t' << worldY << endl << endl;
+
+		if(mode == DESIGN) {
+			if(triangle != NULL) {
+				triangle->firstVertex(worldX, worldY);
+				triangle->computeTexCoords((float) WIDTH, (float) HEIGHT);
+				triangle->computeBarycenter();
+			}
+		} else if(mode == SELECT) {
+			vector<Actor*> children = triangles.getChildren();
+			unsigned int i, size = children.size();
+			boolean selected = false;
+			for(i = 0; i < size; ++i){
+				Triangle* child = (Triangle*) children[i];
+				if(!selected && (*child).hit(worldX, worldY)) {
+					selected = true;
+					triangle = child;
+					triangle->setSelected(true);
+					break;
+				} else {
+					(*child).setSelected(false);
+				}
+			}
+			if(!selected) {
+				triangle = NULL;
+			}
+		} else if (mode == ANIMATE) {
+
+		}
 	}
 }
 
@@ -172,13 +243,41 @@ int main(int argc, char *argv[]){
   //OpenGL basic setting
   intitGL();
 
-  Triangle triangle;
-  triangle.setX(100);
-  triangle.setY(100);
-  triangle.setColor(1, 0, 0, 1);
-  triangles.addChildren(&triangle);
+   /* initialize random seed: */
+  srand (time(NULL));
+
+  unsigned int width, heignt;
+  initTexture(textureID, width, heignt, "ray.bmp");
+
+  image.setSize((float) WIDTH, (float) HEIGHT);
+  image.setTextureId(textureID);
+  image.setColor(1, 0, 0, 1);
+
+  root.addChildren(&image);
+
+  vector<PV2D> vertex;
+  PV2D v1(100, 100);
+  vertex.push_back(v1);
+  PV2D v2(200, 100);
+  vertex.push_back(v2);
+  PV2D v3(200, 150);
+  vertex.push_back(v3);
+  Triangle triang;
+  triang.setVertex(vertex);
+  triang.setColor(1, 0, 0, 1);
+  triang.setTextureId(textureID);
+  triang.computeTexCoords((float) WIDTH, (float) HEIGHT);
+  triang.computeBarycenter();
+  triang.setDirection(rand(), rand());
+  triangle = &triang;
+
+  triangles.addChildren(triangle);
   root.addChildren(&triangles);
+
+  changeMode(DESIGN);
   
+
+
   // Freeglut's main loop can be stopped executing (**)
   //while ( continue_in_main_loop )
   //  glutMainLoopEvent();

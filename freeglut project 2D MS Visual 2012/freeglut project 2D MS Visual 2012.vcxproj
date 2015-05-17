@@ -75,6 +75,7 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="Group.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PV2D.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
@@ -84,6 +85,7 @@
   <ItemGroup>
     <ClInclude Include="Actor.h" />
     <ClInclude Include="Group.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="PV2D.h" />
     <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="TextureManagement.h" />
