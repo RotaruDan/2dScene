@@ -23,6 +23,8 @@ class Group : public Actor {
 		void addChildren(Actor* actor);
 		void draw();
 
+		vector<Actor*> getChildren();
+
 };
 
 #endif

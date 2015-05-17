@@ -16,7 +16,9 @@
 		unsigned int i, size = children.size();
 		for(i = 0; i < size; ++i){
 			Actor* child = children[i];
-			(*child).render();
+			if((*child).isVisible()) {
+				(*child).render();
+			}
 		}
 	}
 
@@ -26,4 +28,9 @@
 
 	void Group::draw(){
 		drawChildren();
+	}
+
+	
+	vector<Actor*> Group::getChildren() {
+		return children;
 	}

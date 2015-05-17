@@ -12,6 +12,7 @@ class Actor{
 
 	private:
 		GLdouble x, y;
+		boolean visible;
 
 	protected:
 		GLfloat r, g, b, a;
@@ -35,6 +36,8 @@ class Actor{
 		void render();
 
 		virtual void draw();
+		void setVisible(boolean visible);
+		boolean isVisible();
 };
 
 #endif

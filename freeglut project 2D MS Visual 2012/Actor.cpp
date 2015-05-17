@@ -10,6 +10,7 @@
 		a = 1.0;
 		x = 0.0;
 		y = 0.0;
+		visible = true;
 	}
 
 	Actor::~Actor(){
@@ -49,4 +50,12 @@
 
 	void Actor::draw(){
 
+	}
+
+	void Actor::setVisible(boolean visible) {
+		Actor::visible = visible;
+	}
+
+	boolean Actor::isVisible() {
+		return visible;
 	}
