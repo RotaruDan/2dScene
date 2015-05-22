@@ -1,3 +1,6 @@
+//---------------------------------------------------------------------------
+// Dan Cristian, Rotaru
+//---------------------------------------------------------------------------
 #include <Windows.h>
 #include <gl/GL.h>
 #include <gl/GLU.h>
@@ -21,7 +24,7 @@ using namespace std;
 // Viewport size
 int WIDTH= 500, HEIGHT= 250;
 
-int animationPeriod = 1000;
+int animationPeriod = 1000 / 60;
 
 boolean animating = true;
 // Scene visible area size
@@ -66,14 +69,18 @@ void display(void){
   glutSwapBuffers();
 }
 
+void move() {
+	vector<Actor*> children = triangles.getChildren();
+	unsigned int i, size = children.size();
+	for(i = 0; i < size; ++i){
+		Triangle* child = (Triangle*) children[i];
+		(*child).move((float) WIDTH, (float) HEIGHT);
+	}
+}
+
 void animate(int value){
 	if(animating) {
-		vector<Actor*> children = triangles.getChildren();
-		unsigned int i, size = children.size();
-		for(i = 0; i < size; ++i){
-			Triangle* child = (Triangle*) children[i];
-			(*child).move();
-		}
+		move();
 	
 		glutTimerFunc(animationPeriod, animate, 1);
 		glutPostRedisplay();
@@ -118,6 +125,7 @@ void changeMode(Mode newMode) {
 		Triangle* child = (Triangle*) children[i];
 		(*child).setMode(newMode);
 	}
+	cout << "Mode changed to: " << newMode << endl;
 }
 
 void key(unsigned char key, int x, int y){
@@ -130,27 +138,36 @@ void key(unsigned char key, int x, int y){
     break;
 
   case 'a' :
-	changeMode(ANIMATE);
-    image.setVisible(false);	
-	if(animating) {
+	if(mode != ANIMATE) {
+		changeMode(ANIMATE);
+		image.setVisible(false);	
+		animating = true;
 		animate(1);
 	}
     break ;
-
-  case 's' :
-	  
-    if(mode == ANIMATE) {
+  case 'i' : // Press 'i' to stop the animation
+	 if(mode == ANIMATE) {
 		animating = !animating;
 		if(animating) {
 			animate(1);
 		}
-	} else {
-		changeMode(SELECT);
-		image.setVisible(false);
 	}
+    break;
+
+  case 'p' :
+	 if(mode == ANIMATE &&!animating) {
+		move();
+		glutPostRedisplay();
+	}
+    break;
+  case 's' :
+	animating = false;
+	changeMode(SELECT);
+	image.setVisible(false);
     break ;
 	
   case 'd' :
+	animating = false;
     changeMode(DESIGN);
     image.setVisible(true);
     break ;
@@ -182,8 +199,8 @@ void mouse(int button, int state, int x, int y){
 	*/
 		GLfloat worldX, worldY;
 
-		worldX = xLeft + ((xRight - xLeft) / (float) WIDTH) * x;
-		worldY = yTop - ((yTop - yBot) / (float) HEIGHT) * y;
+		worldX = static_cast<GLfloat>(xLeft) + (static_cast<GLfloat>(xRight - xLeft) / (float) WIDTH) * x;
+		worldY = static_cast<GLfloat>(yTop) - (static_cast<GLfloat>(yTop - yBot) / (float) HEIGHT) * y;
 		
 		cout << "World: " << worldX << '\t' << worldY << endl << endl;
 
@@ -217,6 +234,26 @@ void mouse(int button, int state, int x, int y){
 	}
 }
 
+Triangle * buildTriangle(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
+	Triangle * triangle = new Triangle();
+
+	vector<PV2D> vertex;
+	PV2D v1(x1, y1);
+	vertex.push_back(v1);
+	PV2D v2(x2, y2);
+	vertex.push_back(v2);
+	PV2D v3(x3, y3);
+	vertex.push_back(v3);
+
+	triangle->setVertex(vertex);
+	triangle->setColor(1, 0, 0, 1);
+	triangle->setTextureId(textureID);
+	triangle->computeTexCoords((float) WIDTH, (float) HEIGHT);
+	triangle->computeBarycenter();
+	triangle->setDirection((static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10, (static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10);
+
+	return triangle;
+}
 
 
 int main(int argc, char *argv[]){
@@ -255,23 +292,14 @@ int main(int argc, char *argv[]){
 
   root.addChildren(&image);
 
-  vector<PV2D> vertex;
-  PV2D v1(100, 100);
-  vertex.push_back(v1);
-  PV2D v2(200, 100);
-  vertex.push_back(v2);
-  PV2D v3(200, 150);
-  vertex.push_back(v3);
-  Triangle triang;
-  triang.setVertex(vertex);
-  triang.setColor(1, 0, 0, 1);
-  triang.setTextureId(textureID);
-  triang.computeTexCoords((float) WIDTH, (float) HEIGHT);
-  triang.computeBarycenter();
-  triang.setDirection(rand(), rand());
-  triangle = &triang;
-
+  triangle = buildTriangle(100, 100 ,200, 100, 200, 150);
   triangles.addChildren(triangle);
+  
+  //for(int i = 0; i < 10; ++i) {
+	//triangles.addChildren(buildTriangle(100, 100 ,200, 100, 200, 150));
+  //}
+
+
   root.addChildren(&triangles);
 
   changeMode(DESIGN);
