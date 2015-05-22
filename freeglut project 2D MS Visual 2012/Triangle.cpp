@@ -21,10 +21,11 @@
 			glBindTexture(GL_TEXTURE_2D, textureID);
 			glBegin(GL_TRIANGLES);
 			for(unsigned int i = 0; i < vertex.size(); ++i) {
-				glVertex2d(vertex[i].getX(), vertex[i].getY());
 				glTexCoord2f(texCoords[i].getX(), texCoords[i].getY());
+				glVertex2d(vertex[i].getX(), vertex[i].getY());
 			}
-			glEnd();
+			glEnd();			
+			glBindTexture(GL_TEXTURE_2D, 0);
 			if(selected) {
 				glBegin(GL_LINE_LOOP);
 				for(unsigned int i = 0; i < vertex.size(); ++i) {
@@ -33,12 +34,14 @@
 				glEnd();
 			}
 		} else if (mode == ANIMATE) {
+			glBindTexture(GL_TEXTURE_2D, textureID);
 			glBegin(GL_TRIANGLES);
 			for(unsigned int i = 0; i < vertex.size(); ++i) {
-				glVertex2d(vertex[i].getX(), vertex[i].getY());
 				glTexCoord2f(texCoords[i].getX(), texCoords[i].getY());
+				glVertex2d(vertex[i].getX(), vertex[i].getY());
 			}
 			glEnd();
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 
@@ -53,22 +56,22 @@
 
 	void Triangle::computeTexCoords(GLfloat width, GLfloat height) {
 		PV2D vertex1 = vertex[0];
-		PV2D texCoord1(vertex1.getX()/width, vertex1.getY() / height);
+		PV2D * texCoord1 = new PV2D(vertex1.getX()/width, vertex1.getY() / height);
 		PV2D vertex2 = vertex[1];
-		PV2D texCoord2(vertex2.getX()/width, vertex2.getY() / height);
+		PV2D * texCoord2 = new PV2D(vertex2.getX()/width, vertex2.getY() / height);
 		PV2D vertex3 = vertex[2];
-		PV2D texCoord3(vertex3.getX()/width, vertex3.getY() / height);
+		PV2D * texCoord3 = new PV2D(vertex3.getX()/width, vertex3.getY() / height);
 
 		texCoords.clear();
-		texCoords.push_back(texCoord1);
-		texCoords.push_back(texCoord2);
-		texCoords.push_back(texCoord3);
+		texCoords.push_back(*texCoord1);
+		texCoords.push_back(*texCoord2);
+		texCoords.push_back(*texCoord3);
 	}
 	
 	void Triangle::computeBarycenter() {
 		GLfloat third = 0.333;
-		setBarycenter(vertex[0].getX() * third + vertex[1].getX() + vertex[2].getX(),
-			vertex[0].getY() * third + vertex[1].getY() + vertex[2].getY());
+		setBarycenter((vertex[0].getX() + vertex[1].getX() + vertex[2].getX()) * third,
+			(vertex[0].getY() + vertex[1].getY() + vertex[2].getY()) * third);
 	}
 	
 	bool Triangle::hit(GLfloat x, GLfloat y) {
@@ -93,7 +96,15 @@
 		Triangle::selected = selected;
 	}
 
-	void Triangle::move() {
+	void Triangle::move(float width, float height) {
+		
+		if(!(barycenter.getX() >= 0 && barycenter.getX() < width)) {
+			direction.setX(-direction.getX());	
+		}
+		if(!(barycenter.getY() >= 0 && barycenter.getY() < height)) {
+			direction.setY(-direction.getY());
+		}
+
 		barycenter.trasladar(&direction);
 		for(unsigned int i = 0; i < vertex.size(); ++i) {
 			vertex[i].trasladar(&direction);

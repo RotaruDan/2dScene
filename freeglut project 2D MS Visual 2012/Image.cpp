@@ -25,7 +25,8 @@
 
 		glTexCoord2f(0, 1);
 		glVertex2f(0, height); // Lower left
-		glEnd();
+		glEnd();		
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Image::setSize(GLfloat w, GLfloat h) {

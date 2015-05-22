@@ -22,11 +22,11 @@ class Triangle : public Actor {
 		GLuint textureID;
 		vector<PV2D> vertex;
 		vector<PV2D> texCoords;
-		PV2D barycenter, direction;
 		bool selected;
 		Mode mode;
 
 	public:
+		PV2D barycenter, direction;
 		Triangle();
 		~Triangle();
 		void draw();
@@ -35,7 +35,7 @@ class Triangle : public Actor {
 		void computeTexCoords(GLfloat width, GLfloat height);
 		bool hit(GLfloat x, GLfloat y);
 		void setSelected(bool selected);
-		void move();
+		void move(float width, float height);
 		void setDirection(GLfloat x, GLfloat y);
 		void setBarycenter(GLfloat x, GLfloat y);
 		void computeBarycenter();
