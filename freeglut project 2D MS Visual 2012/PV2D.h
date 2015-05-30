@@ -24,6 +24,7 @@ public:
    void setX(float x1);
    void setY(float y1);
    float longitud(); //longitud del vector
+   PV2D* normalIzquierda();
 
    PV2D* rotaP(PV2D* centroRot, double ang);
   //se construye un nuevo punto a partir del receptor girando el ángulo ang

@@ -88,5 +88,7 @@ float PV2D::longitud(){
 }
 //---------------------------------------------------------------------------
 
-
+PV2D* PV2D::normalIzquierda() {
+	return new PV2D(-y, x);
+}
 
