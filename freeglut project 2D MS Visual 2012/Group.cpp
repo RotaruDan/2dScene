@@ -26,6 +26,16 @@
 		children.push_back(actor);
 	}
 
+	void Group::removeChildren(Actor* actor){
+		unsigned int i, size = children.size();
+		for(i = 0; i < size; ++i){
+		   if(children[i] == actor) {
+			   children.erase(children.begin() + i);
+			   break;
+		   }
+		}
+	}
+
 	void Group::draw(){
 		drawChildren();
 	}

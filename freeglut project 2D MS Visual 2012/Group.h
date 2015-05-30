@@ -21,6 +21,7 @@ class Group : public Actor {
 		~Group();
 
 		void addChildren(Actor* actor);
+		void removeChildren(Actor* actor);
 		void draw();
 
 		vector<Actor*> getChildren();
