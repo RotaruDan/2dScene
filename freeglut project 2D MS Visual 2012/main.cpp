@@ -22,13 +22,13 @@ using namespace std;
 // bool continue_in_main_loop= true; //(**)
 
 // Viewport size
-int WIDTH= 500, HEIGHT= 250;
+int WIDTH= 800, HEIGHT= 600;
 
 int animationPeriod = 1000 / 60;
 
 boolean animating = true;
 // Scene visible area size
-GLdouble xLeft= 0.0, xRight= 500.0, yBot= 0.0, yTop= 250.0;
+GLdouble xLeft= 0.0, xRight= 800.0, yBot= 0.0, yTop= 600.0;
 
 Group root;
 Group triangles;
@@ -37,6 +37,8 @@ Image image;
 
 Mode mode;
 GLuint textureID;
+
+vector<PV2D> tempVertex;
 
 void intitGL(){
 
@@ -160,7 +162,14 @@ void key(unsigned char key, int x, int y){
 		glutPostRedisplay();
 	}
     break;
-  case 's' :
+
+  case 'e' :
+	 if(mode == SELECT && triangle != NULL) {
+		triangles.removeChildren(triangle);
+	}
+    break;
+
+ case 's' :
 	animating = false;
 	changeMode(SELECT);
 	image.setVisible(false);
@@ -181,6 +190,28 @@ void key(unsigned char key, int x, int y){
     glutPostRedisplay();
 }
 
+Triangle * buildTriangle(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
+	Triangle * triangle = new Triangle();
+
+	vector<PV2D> vertex;
+	PV2D v1(x1, y1);
+	vertex.push_back(v1);
+	PV2D v2(x2, y2);
+	vertex.push_back(v2);
+	PV2D v3(x3, y3);
+	vertex.push_back(v3);
+
+	triangle->setVertex(vertex);
+	triangle->setColor(1, 0, 0, 1);
+	triangle->setTextureId(textureID);
+	triangle->computeTexCoords((float) WIDTH, (float) HEIGHT);
+	triangle->computeBarycenter();
+	triangle->setDirection((static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10, (static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10);
+	triangle->setMode(mode);
+	triangle->setSelected(false);
+
+	return triangle;
+}
 
 void mouse(int button, int state, int x, int y){
 	if ((button==GLUT_LEFT_BUTTON) && (state==GLUT_DOWN)) {
@@ -205,10 +236,21 @@ void mouse(int button, int state, int x, int y){
 		cout << "World: " << worldX << '\t' << worldY << endl << endl;
 
 		if(mode == DESIGN) {
-			if(triangle != NULL) {
-				triangle->firstVertex(worldX, worldY);
-				triangle->computeTexCoords((float) WIDTH, (float) HEIGHT);
-				triangle->computeBarycenter();
+			if (tempVertex.size() == 3) {
+				tempVertex.clear();
+			}
+			PV2D vertex(worldX, worldY);
+			tempVertex.push_back(vertex);
+			if(tempVertex.size() == 3) {
+				if(triangle != NULL) {
+					triangle->setSelected(false);
+				}
+				triangle = buildTriangle(tempVertex[0].getX(), tempVertex[0].getY(), 
+					tempVertex[1].getX(), tempVertex[1].getY(), 
+					tempVertex[2].getX(), tempVertex[2].getY());
+				triangle->setSelected(true);
+
+				triangles.addChildren(triangle);
 			}
 		} else if(mode == SELECT) {
 			vector<Actor*> children = triangles.getChildren();
@@ -220,7 +262,6 @@ void mouse(int button, int state, int x, int y){
 					selected = true;
 					triangle = child;
 					triangle->setSelected(true);
-					break;
 				} else {
 					(*child).setSelected(false);
 				}
@@ -233,28 +274,6 @@ void mouse(int button, int state, int x, int y){
 		}
 	}
 }
-
-Triangle * buildTriangle(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
-	Triangle * triangle = new Triangle();
-
-	vector<PV2D> vertex;
-	PV2D v1(x1, y1);
-	vertex.push_back(v1);
-	PV2D v2(x2, y2);
-	vertex.push_back(v2);
-	PV2D v3(x3, y3);
-	vertex.push_back(v3);
-
-	triangle->setVertex(vertex);
-	triangle->setColor(1, 0, 0, 1);
-	triangle->setTextureId(textureID);
-	triangle->computeTexCoords((float) WIDTH, (float) HEIGHT);
-	triangle->computeBarycenter();
-	triangle->setDirection((static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10, (static_cast<GLfloat>(rand()) / (RAND_MAX)) * 10);
-
-	return triangle;
-}
-
 
 int main(int argc, char *argv[]){
   cout<< "Starting console..." << endl;
@@ -281,7 +300,7 @@ int main(int argc, char *argv[]){
   intitGL();
 
    /* initialize random seed: */
-  srand (time(NULL));
+  srand(static_cast<unsigned>(time(NULL)));
 
   unsigned int width, heignt;
   initTexture(textureID, width, heignt, "ray.bmp");
@@ -293,6 +312,7 @@ int main(int argc, char *argv[]){
   root.addChildren(&image);
 
   triangle = buildTriangle(100, 100 ,200, 100, 200, 150);
+  triangle->setSelected(true);
   triangles.addChildren(triangle);
   
   //for(int i = 0; i < 10; ++i) {
