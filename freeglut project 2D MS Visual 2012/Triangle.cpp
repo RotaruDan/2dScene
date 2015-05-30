@@ -75,21 +75,79 @@
 	}
 	
 	bool Triangle::hit(GLfloat x, GLfloat y) {
+		PV2D A = vertex[0];
+		PV2D B = vertex[1];
+		PV2D C = vertex[2];
 
-		for(unsigned int i = 0, n = vertex.size(); i < n; ++i) {
-			PV2D a = vertex[i];
-			PV2D b = vertex[(i+1) % n];
-			PV2D affineSegment(b.getX() - a.getX(), b.getY() - a.getY());
-			PV2D affinePoint(x - a.getX(), y - a.getY());
+		PV2D CP(x - C.getX(), y - C.getY());
+		PV2D CB(B.getX() - C.getX(), B.getY() - C.getY());
+		PV2D CA(A.getX() - C.getX(), A.getY() - C.getY());
+		PV2D CAi = *(CA.normalIzquierda());
+		PV2D CBi = *(CB.normalIzquierda());
 
-			GLfloat xProduct = affineSegment.getX() * affinePoint.getY() - affineSegment.getY() * affinePoint.getX();
+		float a = CP.dot(&CBi) / CA.dot(&CBi);
+		
+		float b = CP.dot(&CAi) / CB.dot(&CAi);
 
-			if(xProduct <= 0) {
-				return false;
-			}
-		}
+		return (a >= 0  && b >= 0) && (a + b) <= 1;
+		//int hits = 0;
 
-		return true;
+		//unsigned int npoints = vertex.size();
+  //      int lastx = vertex[npoints - 1].getX();
+  //      int lasty = vertex[npoints - 1].getY();
+  //      int curx, cury;
+
+  //      // Walk the edges of the polygon
+  //      for (int i = 0; i < npoints; lastx = curx, lasty = cury, i++) {
+  //          curx = vertex[i].getX();
+  //          cury = vertex[i].getY();
+
+  //          if (cury == lasty) {
+  //              continue;
+  //          }
+
+  //          int leftx;
+  //          if (curx < lastx) {
+  //              if (x >= lastx) {
+  //                  continue;
+  //              }
+  //              leftx = curx;
+  //          } else {
+  //              if (x >= curx) {
+  //                  continue;
+  //              }
+  //              leftx = lastx;
+  //          }
+
+  //          double test1, test2;
+  //          if (cury < lasty) {
+  //              if (y < cury || y >= lasty) {
+  //                  continue;
+  //              }
+  //              if (x < leftx) {
+  //                  hits++;
+  //                  continue;
+  //              }
+  //              test1 = x - curx;
+  //              test2 = y - cury;
+  //          } else {
+  //              if (y < lasty || y >= cury) {
+  //                  continue;
+  //              }
+  //              if (x < leftx) {
+  //                  hits++;
+  //                  continue;
+  //              }
+  //              test1 = x - lastx;
+  //              test2 = y - lasty;
+  //          }
+
+  //          if (test1 < (test2 / (lasty - cury) * (lastx - curx))) {
+  //              hits++;
+  //          }
+  //      }
+
+  //      return ((hits & 1) != 0);
 	}
 
 	void Triangle::setSelected(bool selected) {
